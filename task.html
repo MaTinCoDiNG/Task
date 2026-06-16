@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>TaskFlow — مدیریت روزانه</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        :root {
+            --accent: #a3e635;
+            --accent-dim: rgba(163, 230, 53, 0.15);
+            --accent-glow: rgba(163, 230, 53, 0.3);
+            --bg: #0a0a0a;
+            --surface: rgba(255, 255, 255, 0.04);
+            --surface-hover: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.09);
+            --border-strong: rgba(255, 255, 255, 0.15);
+            --text: #f0f0f0;
+            --text-dim: rgba(255, 255, 255, 0.45);
+            --text-muted: rgba(255, 255, 255, 0.22);
+            --danger: #ff5f5f;
+            --warning: #fbbf24;
+            --info: #38bdf8;
+            --purple: #a855f7;
+            --r-sm: 12px;
+            --r-md: 18px;
+            --r-lg: 24px;
+            --r-xl: 32px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            font-family: 'Vazirmatn', -apple-system, sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* BLOBS */
+        .blobs {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.14;
+            animation: blobFloat 14s ease-in-out infinite;
+        }
+
+        .b1 {
+            width: 500px;
+            height: 500px;
+            background: #a3e635;
+            top: -15%;
+            right: -10%;
+            animation-delay: 0s;
+        }
+
+        .b2 {
+            width: 350px;
+            height: 350px;
+            background: #38bdf8;
+            bottom: 10%;
+            left: -8%;
+            animation-delay: -5s;
+        }
+
+        .b3 {
+            width: 280px;
+            height: 280px;
+            background: #a855f7;
+            top: 45%;
+            left: 40%;
+            animation-delay: -10s;
+        }
+
+        @keyframes blobFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(25px, -18px) scale(1.04);
+            }
+
+            66% {
+                transform: translate(-15px, 12px) scale(0.96);
+            }
+        }
+
+        /* GLASS */
+        .glass {
+            position: relative;
+            overflow: hidden;
+            background: rgba(15, 15, 20, 0.6);
+            backdrop-filter: blur(24px) saturate(1.5);
+            -webkit-backdrop-filter: blur(24px) saturate(1.5);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            z-index: 1;
+        }
+
+        /* LAYOUT */
+        .shell {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            grid-template-rows: 58px 1fr;
+            min-height: 100vh;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 14px;
+            gap: 10px;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            grid-column: 1 / -1;
+            border-radius: var(--r-lg);
+            border: 1px solid var(--border);
+            padding: 0 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            flex-shrink: 0;
+        }
+
+        .logo-name {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--accent-dim);
+            border: 1px solid var(--accent-glow);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+            transform: scale(1.05);
+        }
+
+        .icon-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            border-radius: var(--r-lg);
+            border: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow-y: auto;
+        }
+
+        .sec-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 10px 8px 5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 11px;
+            border-radius: var(--r-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dim);
+        }
+
+        .nav-item:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .nav-item svg {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+        }
+
+        .nav-badge {
+            margin-right: auto;
+            background: var(--accent);
+            color: #000;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 20px;
+        }
+
+        .nav-badge.dim {
+            background: var(--surface-hover);
+            color: var(--text-dim);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 0;
+        }
+
+        /* USER CARD */
+        .user-card {
+            margin-top: auto;
+            padding: 13px;
+            border-radius: var(--r-md);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .user-ava {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #65a30d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #000;
+            flex-shrink: 0;
+            border: 2px dashed rgba(163, 230, 53, 0.4);
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 0;
+            border-top: 1px solid var(--border);
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .ustat {
+            text-align: center;
+            flex: 1;
+        }
+
+        .ustat-val {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .ustat-lbl {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 1px;
+        }
+
+        /* MAIN */
+        .main {
+            border-radius: var(--r-lg);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .main-inner {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* MAIN HEADER */
+        .main-hdr {
+            padding: 18px 22px 14px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .hdr-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+
+        .page-sub {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .hdr-actions {
+            display: flex;
+            gap: 7px;
+        }
+
+        /* DATE NAVIGATOR */
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-nav-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .date-nav-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+        }
+
+        .date-nav-btn svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .week-strip {
+            display: flex;
+            gap: 5px;
+            flex: 1;
+        }
+
+        .day-pill {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 7px 4px;
+            border-radius: var(--r-sm);
+            cursor: pointer;
+            transition: all 0.25s;
+            border: 1px solid transparent;
+        }
+
+        .day-pill:hover {
+            background: var(--surface-hover);
+        }
+
+        .day-pill.active {
+            background: var(--accent-dim);
+            border-color: var(--accent-glow);
+        }
+
+        .day-pill.selected-date {
+            background: rgba(163, 230, 53, 0.25);
+            border-color: var(--accent);
+        }
+
+        .day-name {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .day-num {
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .day-pill.active .day-name,
+        .day-pill.active .day-num {
+            color: var(--accent);
+        }
+
+        .day-pill.selected-date .day-name,
+        .day-pill.selected-date .day-num {
+            color: var(--accent);
+        }
+
+        .day-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--border);
+            margin-top: 4px;
+        }
+
+        .day-dot.has-task {
+            background: var(--accent);
+        }
+
+        /* STATS ROW */
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            padding: 14px 22px;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-card {
+            flex: 1;
+            border-radius: var(--r-md);
+            padding: 13px 15px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .stat-card:hover {
+            background: var(--surface-hover);
+            transform: translateY(-1px);
+        }
+
+        .stat-ico {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--r-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-ico svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .stat-ico.g {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .stat-ico.b {
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--info);
+        }
+
+        .stat-ico.o {
+            background: rgba(251, 191, 36, 0.12);
+            color: var(--warning);
+        }
+
+        .stat-ico.r {
+            background: rgba(255, 95, 95, 0.12);
+            color: var(--danger);
+        }
+
+        .stat-val {
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-lbl {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .prog-wrap {
+            margin-top: 5px;
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .prog-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--accent);
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* TASK AREA */
+        .task-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 22px;
+        }
+
+        .task-area::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .task-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .task-area::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        /* STREAK BANNER */
+        .streak-banner {
+            border-radius: var(--r-md);
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(163, 230, 53, 0.05), rgba(56, 189, 248, 0.03));
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .streak-ico {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--r-sm);
+            background: rgba(251, 191, 36, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--warning);
+        }
+
+        .streak-ico svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .streak-head {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .streak-sub {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .streak-dots {
+            display: flex;
+            gap: 5px;
+            margin-top: 7px;
+        }
+
+        .sdot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .sdot.done {
+            background: var(--accent);
+        }
+
+        .sdot.today {
+            background: var(--accent);
+            outline: 2px solid rgba(163, 230, 53, 0.35);
+            outline-offset: 2px;
+        }
+
+        /* SECTION */
+        .task-section {
+            margin-bottom: 18px;
+        }
+
+        .sec-hdr {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 9px;
+            cursor: pointer;
+            user-select: none;
+            padding: 4px 0;
+        }
+
+        .sec-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .sec-count {
+            font-size: 11px;
+            background: var(--surface-hover);
+            color: var(--text-dim);
+            padding: 1px 7px;
+            border-radius: 10px;
+        }
+
+        .sec-chev {
+            margin-right: auto;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+            display: flex;
+        }
+
+        .sec-chev svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .sec-chev.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        /* TASK ITEM */
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            padding: 13px 15px;
+            border-radius: var(--r-md);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            margin-bottom: 7px;
+            transition: all 0.25s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: taskIn 0.3s ease-out;
+        }
+
+        @keyframes taskIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .task-item::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 0 var(--r-md) var(--r-md) 0;
+            background: transparent;
+            transition: background 0.2s;
+        }
+
+        .task-item.ph::before {
+            background: var(--danger);
+        }
+
+        .task-item.pm::before {
+            background: var(--warning);
+        }
+
+        .task-item.pl::before {
+            background: var(--info);
+        }
+
+        .task-item:hover {
+            background: var(--surface-hover);
+            transform: translateX(-2px);
+            box-shadow: 3px 0 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .task-item.done {
+            opacity: 0.48;
+        }
+
+        .task-item.done .t-title {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* CHECKBOX */
+        .t-check {
+            width: 21px;
+            height: 21px;
+            border-radius: 7px;
+            border: 2px solid var(--border);
+            flex-shrink: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+            margin-top: 1px;
+            color: transparent;
+        }
+
+        .t-check:hover {
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .t-check.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #000;
+            animation: checkPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.8);
+        }
+
+        .t-check svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        @keyframes checkPop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .t-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .t-title {
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .t-desc {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+
+        .t-meta {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tag svg {
+            width: 10px;
+            height: 10px;
+        }
+
+        .tg {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .tb {
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--info);
+        }
+
+        .to {
+            background: rgba(251, 191, 36, 0.12);
+            color: var(--warning);
+        }
+
+        .tp {
+            background: rgba(168, 85, 247, 0.12);
+            color: var(--purple);
+        }
+
+        .tr {
+            background: rgba(255, 95, 95, 0.12);
+            color: var(--danger);
+        }
+
+        .t-due {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .t-due svg {
+            width: 11px;
+            height: 11px;
+        }
+
+        .t-due.ov {
+            color: var(--danger);
+        }
+
+        .t-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .task-item:hover .t-actions {
+            opacity: 1;
+        }
+
+        .t-act-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .t-act-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+        }
+
+        .t-act-btn.del:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .t-act-btn svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        /* HABIT */
+        .habit-item {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 11px 14px;
+            border-radius: var(--r-md);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            margin-bottom: 7px;
+            transition: all 0.2s;
+        }
+
+        .habit-item:hover {
+            background: var(--surface-hover);
+        }
+
+        .habit-ico {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .habit-ico svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .habit-info {
+            flex: 1;
+        }
+
+        .habit-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .habit-streak {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .habit-streak svg {
+            width: 11px;
+            height: 11px;
+        }
+
+        .habit-days {
+            display: flex;
+            gap: 4px;
+        }
+
+        .hday {
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hday.done {
+            background: var(--accent-dim);
+            border-color: var(--accent-glow);
+            color: var(--accent);
+        }
+
+        .hday:hover {
+            transform: scale(1.1);
+        }
+
+        /* EMPTY */
+        .empty {
+            text-align: center;
+            padding: 36px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-ico {
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .empty-ico svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        .empty p {
+            font-size: 13px;
+        }
+
+        /* ADD TASK BAR */
+        .add-bar {
+            padding: 0 22px 18px;
+            flex-shrink: 0;
+        }
+
+        .add-row {
+            display: flex;
+            gap: 7px;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 9px 13px;
+            transition: all 0.2s;
+        }
+
+        .add-row:focus-within {
+            border-color: var(--accent-glow);
+            background: rgba(163, 230, 53, 0.03);
+            box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.08);
+        }
+
+        .add-row-ico {
+            color: var(--text-muted);
+            display: flex;
+        }
+
+        .add-row-ico svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .add-inp {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+            direction: rtl;
+        }
+
+        .add-inp::placeholder {
+            color: var(--text-muted);
+        }
+
+        .add-opts {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            padding: 7px 0 0;
+        }
+
+        .chip {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .chip:hover {
+            border-color: var(--accent-glow);
+            color: var(--accent);
+        }
+
+        .chip.sel {
+            background: var(--accent-dim);
+            border-color: var(--accent-glow);
+            color: var(--accent);
+        }
+
+        .add-btn {
+            margin-right: auto;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .add-btn svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .add-btn:hover {
+            background: #bef264;
+            transform: scale(1.02);
+        }
+
+        .add-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* MODAL */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+
+        .overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 420px;
+            border-radius: var(--r-xl);
+            border: 1px solid var(--border-strong);
+            overflow: hidden;
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+        }
+
+        .overlay.open .modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-hdr {
+            padding: 20px 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 16px 20px 0;
+        }
+
+        .form-grp {
+            margin-bottom: 13px;
+        }
+
+        .form-lbl {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .form-inp,
+        .form-sel,
+        .form-ta {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-sm);
+            padding: 10px 13px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+            direction: rtl;
+        }
+
+        .form-inp:focus,
+        .form-sel:focus,
+        .form-ta:focus {
+            border-color: var(--accent-glow);
+            background: rgba(163, 230, 53, 0.03);
+            box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.08);
+        }
+
+        .form-sel {
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .form-sel option {
+            background: #1a1a1a;
+        }
+
+        .form-ta {
+            resize: vertical;
+            min-height: 75px;
+        }
+
+        .prio-row {
+            display: flex;
+            gap: 7px;
+        }
+
+        .prio-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: var(--r-sm);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .prio-btn svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .prio-btn.high.sel {
+            background: rgba(255, 95, 95, 0.12);
+            border-color: rgba(255, 95, 95, 0.4);
+            color: var(--danger);
+        }
+
+        .prio-btn.medium.sel {
+            background: rgba(251, 191, 36, 0.12);
+            border-color: rgba(251, 191, 36, 0.4);
+            color: var(--warning);
+        }
+
+        .prio-btn.low.sel {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.4);
+            color: var(--info);
+        }
+
+        .modal-ftr {
+            padding: 14px 20px 20px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 10px;
+            border-radius: var(--r-md);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: var(--surface-hover);
+        }
+
+        .btn-save {
+            flex: 1.5;
+            padding: 10px;
+            border-radius: var(--r-md);
+            border: none;
+            background: var(--accent);
+            color: #000;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-save svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .btn-save:hover {
+            background: #bef264;
+            transform: scale(1.01);
+        }
+
+        /* TOAST */
+        .toast-box {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: rgba(22, 22, 28, 0.96);
+            border: 1px solid var(--border-strong);
+            border-radius: 20px;
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            backdrop-filter: blur(20px);
+            animation: tIn 0.3s ease-out, tOut 0.3s ease-in 2.2s forwards;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        @keyframes tIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes tOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+        }
+
+        /* BOTTOM NAV */
+        .bnav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            padding: 0 14px 18px;
+            background: linear-gradient(transparent, rgba(10, 10, 10, 0.97) 40%);
+        }
+
+        .bnav-inner {
+            border-radius: var(--r-xl);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 9px 6px;
+            gap: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bnav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 5px 4px;
+            border-radius: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dim);
+            font-size: 9px;
+            font-weight: 500;
+        }
+
+        .bnav-item svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .bnav-item.active {
+            color: var(--accent);
+        }
+
+        /* SEARCH BAR */
+        .search-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+        }
+
+        .search-bar.visible {
+            transform: translateY(0);
+        }
+
+        .search-input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 15px;
+            direction: rtl;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .shell {
+                grid-template-columns: 1fr;
+                grid-template-rows: 52px 1fr;
+                padding: 8px 8px 76px;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .bnav {
+                display: block;
+            }
+
+            .topbar {
+                grid-column: 1;
+            }
+
+            .stats-row {
+                overflow-x: auto;
+                padding: 12px 14px;
+            }
+
+            .stats-row::-webkit-scrollbar {
+                display: none;
+            }
+
+            .stat-card {
+                min-width: 120px;
+            }
+
+            .week-strip {
+                overflow-x: auto;
+            }
+
+            .week-strip::-webkit-scrollbar {
+                display: none;
+            }
+
+            .day-pill {
+                min-width: 42px;
+            }
+
+            .top-badge {
+                display: none;
+            }
+
+            .add-opts {
+                overflow-x: auto;
+            }
+
+            .add-opts::-webkit-scrollbar {
+                display: none;
+            }
+
+            .task-area {
+                padding: 12px 14px;
+            }
+
+            .main-hdr {
+                padding: 14px 14px 11px;
+            }
+
+            .add-bar {
+                padding: 0 14px 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="blobs">
+        <div class="blob b1"></div>
+        <div class="blob b2"></div>
+        <div class="blob b3"></div>
+    </div>
+
+    <div class="shell">
+
+        <!-- TOPBAR -->
+        <div class="glass topbar" style="border-radius:24px;border:1px solid var(--border)">
+            <div class="logo-wrap">
+                <div class="logo-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                </div>
+                <span class="logo-name">TaskFlow</span>
+            </div>
+            <div class="top-right">
+                <div class="top-badge" id="topBadge">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span id="topBadgeVal">0</span> تکمیل امروز
+                </div>
+                <div class="icon-btn" onclick="toggleSearch()" title="جستجو">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                </div>
+                <div class="icon-btn" onclick="openModal()" title="افزودن">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                </div>
+                <div class="icon-btn" title="تنظیمات">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+                        <path
+                            d="M19.07 4.93l-2.12 2.12M4.93 4.93l2.12 2.12M19.07 19.07l-2.12-2.12M4.93 19.07l2.12-2.12" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="glass sidebar" style="border-radius:24px;border:1px solid var(--border)">
+            <div class="sec-label">منو اصلی</div>
+            <div class="nav-item active" id="nav-today" onclick="setView('today',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                امروز
+                <span class="nav-badge" id="todayBadge">0</span>
+            </div>
+            <div class="nav-item" id="nav-all" onclick="setView('all',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+                همه تسک‌ها
+                <span class="nav-badge dim" id="allBadge">0</span>
+            </div>
+            <div class="nav-item" id="nav-habits" onclick="setView('habits',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                </svg>
+                عادت‌ها
+            </div>
+            <div class="nav-item" id="nav-done" onclick="setView('done',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                انجام‌شده
+            </div>
+
+            <div class="divider"></div>
+            <div class="sec-label">دسته‌بندی</div>
+            <div class="nav-item" onclick="filterByTag('کار')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" />
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                </svg>
+                کار
+            </div>
+            <div class="nav-item" onclick="filterByTag('شخصی')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                شخصی
+            </div>
+            <div class="nav-item" onclick="filterByTag('سلامتی')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+                سلامتی
+            </div>
+            <div class="nav-item" onclick="filterByTag('یادگیری')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+                یادگیری
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- User -->
+            <div class="user-card">
+                <div class="user-ava">م</div>
+                <div class="user-info">
+                    <div class="user-name">Matin & Shayan</div>
+                    <div class="user-role">@Bros</div>
+                </div>
+            </div>
+            <div class="user-stats">
+                <div class="ustat">
+                    <div class="ustat-val" id="streakVal">35</div>
+                    <div class="ustat-lbl">روز</div>
+                </div>
+                <div class="ustat">
+                    <div class="ustat-val" id="lvlVal">8</div>
+                    <div class="ustat-lbl">سطح</div>
+                </div>
+                <div class="ustat">
+                    <div class="ustat-val" id="ptsVal">2071</div>
+                    <div class="ustat-lbl">امتیاز</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="glass main" style="border-radius:24px;border:1px solid var(--border)">
+            <div class="main-inner">
+
+                <!-- SEARCH BAR -->
+                <div class="search-bar" id="searchBar">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="color:var(--text-dim);flex-shrink:0">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input class="search-input" id="searchInput" placeholder="جستجو در تسک‌ها..."
+                        oninput="doSearch(this.value)">
+                    <div class="icon-btn" onclick="closeSearch()" style="flex-shrink:0">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- MAIN HEADER -->
+                <div class="main-hdr">
+                    <div class="hdr-top">
+                        <div>
+                            <div class="page-title" id="pageTitle">امروز</div>
+                            <div class="page-sub" id="pageSub">در حال بارگذاری...</div>
+                        </div>
+                        <div class="hdr-actions">
+                            <div class="icon-btn" onclick="sortTasks()" id="sortBtn" title="مرتب‌سازی">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="21" y1="10" x2="7" y2="10" />
+                                    <line x1="21" y1="6" x2="3" y2="6" />
+                                    <line x1="21" y1="14" x2="3" y2="14" />
+                                    <line x1="21" y1="18" x2="7" y2="18" />
+                                </svg>
+                            </div>
+                            <div class="icon-btn" onclick="openModal()" title="افزودن تسک">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DATE NAVIGATOR -->
+                    <div class="date-nav">
+                        <div class="date-nav-btn" onclick="shiftWeek(-1)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </div>
+                        <div class="week-strip" id="weekStrip"></div>
+                        <div class="date-nav-btn" onclick="shiftWeek(1)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATS ROW -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-ico g">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="3" width="6" height="18" />
+                                <rect x="9" y="7" width="6" height="14" />
+                                <rect x="16" y="11" width="6" height="10" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="statTotal">0</div>
+                            <div class="stat-lbl">کل تسک‌ها</div>
+                            <div class="prog-wrap">
+                                <div class="prog-fill" id="statProg" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-ico b">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="statPending">0</div>
+                            <div class="stat-lbl">در انتظار</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-ico g">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="statDone">0</div>
+                            <div class="stat-lbl">تکمیل شده</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-ico o">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="statStreak">35</div>
+                            <div class="stat-lbl">روز متوالی</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TASK AREA -->
+                <div class="task-area" id="taskArea">
+
+                    <!-- Streak Banner -->
+                    <div class="streak-banner">
+                        <div class="streak-ico">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="8" r="7" />
+                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="streak-head">عالی! ادامه بده! 🔥</div>
+                            <div class="streak-sub">۳۵ روز متوالی فعال هستی</div>
+                            <div class="streak-dots" id="streakDots"></div>
+                        </div>
+                    </div>
+
+                    <!-- Habits Section -->
+                    <div class="task-section" id="habitsSection">
+                        <div class="sec-hdr" onclick="toggleSection('habits')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="color:var(--text-dim)">
+                                <path
+                                    d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                            </svg>
+                            <span class="sec-title">عادت‌های روزانه</span>
+                            <span class="sec-count">4</span>
+                            <span class="sec-chev" id="chev-habits">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div id="habits-list"></div>
+                    </div>
+
+                    <!-- Active Tasks -->
+                    <div class="task-section">
+                        <div class="sec-hdr" onclick="toggleSection('active')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="color:var(--text-dim)">
+                                <line x1="8" y1="6" x2="21" y2="6" />
+                                <line x1="8" y1="12" x2="21" y2="12" />
+                                <line x1="8" y1="18" x2="21" y2="18" />
+                                <line x1="3" y1="6" x2="3.01" y2="6" />
+                                <line x1="3" y1="12" x2="3.01" y2="12" />
+                                <line x1="3" y1="18" x2="3.01" y2="18" />
+                            </svg>
+                            <span class="sec-title">تسک‌های فعال</span>
+                            <span class="sec-count" id="activeCount">0</span>
+                            <span class="sec-chev" id="chev-active">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div id="active-list"></div>
+                    </div>
+
+                    <!-- Completed -->
+                    <div class="task-section">
+                        <div class="sec-hdr" onclick="toggleSection('completed')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="color:var(--text-dim)">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            <span class="sec-title">تکمیل‌شده</span>
+                            <span class="sec-count" id="completedCount">0</span>
+                            <span class="sec-chev" id="chev-completed">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div id="completed-list"></div>
+                    </div>
+
+                </div>
+
+                <!-- ADD BAR -->
+                <div class="add-bar">
+                    <div class="add-row">
+                        <div class="add-row-ico">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </div>
+                        <input class="add-inp" id="quickInput" placeholder="تسک جدید اضافه کن..."
+                            onkeydown="quickAdd(event)">
+                        <div class="icon-btn" onclick="openModal()"
+                            style="background:var(--accent-dim);border-color:var(--accent-glow);color:var(--accent)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="add-opts">
+                        <button class="chip" id="chipHigh" onclick="selectPriority('high')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            فوری
+                        </button>
+                        <button class="chip" id="chipMed" onclick="selectPriority('medium')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                <line x1="12" y1="9" x2="12" y2="13" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
+                            متوسط
+                        </button>
+                        <button class="chip" id="chipLow" onclick="selectPriority('low')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="8 12 12 16 16 12" />
+                                <line x1="12" y1="8" x2="12" y2="16" />
+                            </svg>
+                            عادی
+                        </button>
+                        <button class="chip" onclick="selectTagChip('کار')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" />
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                            </svg>
+                            کار
+                        </button>
+                        <button class="chip" onclick="selectTagChip('شخصی')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                            </svg>
+                            شخصی
+                        </button>
+                        <button class="chip" onclick="selectTagChip('سلامتی')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                            </svg>
+                            سلامتی
+                        </button>
+                        <button class="add-btn" onclick="quickAddBtn()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            افزودن
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bnav">
+        <div class="glass bnav-inner" style="border-radius:var(--r-xl);border:1px solid var(--border)">
+            <div class="bnav-item active" id="bnav-today" onclick="setView('today',null,'today')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                امروز
+            </div>
+            <div class="bnav-item" id="bnav-all" onclick="setView('all',null,'all')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+                همه
+            </div>
+            <div class="bnav-item" id="bnav-habits" onclick="setView('habits',null,'habits')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                </svg>
+                عادت
+            </div>
+            <div class="bnav-item" onclick="openModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                افزودن
+            </div>
+            <div class="bnav-item" id="bnav-done" onclick="setView('done',null,'done')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                انجام
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD TASK MODAL -->
+    <div class="overlay" id="overlay" onclick="overlayClick(event)">
+        <div class="glass modal" style="border-radius:var(--r-xl)">
+            <div class="modal-hdr">
+                <div class="modal-title" id="modalTitleLabel">تسک جدید</div>
+                <div class="icon-btn" onclick="closeModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="form-grp">
+                    <label class="form-lbl">عنوان تسک</label>
+                    <input class="form-inp" id="mTitle" placeholder="چی باید انجام بدی؟"
+                        onkeydown="if(event.key==='Enter')saveTask()">
+                </div>
+                <div class="form-grp">
+                    <label class="form-lbl">توضیحات</label>
+                    <textarea class="form-ta" id="mDesc" placeholder="جزئیات بیشتر..."></textarea>
+                </div>
+                <div class="form-grp">
+                    <label class="form-lbl">دسته‌بندی</label>
+                    <select class="form-sel" id="mTag">
+                        <option value="کار">💼 کار</option>
+                        <option value="شخصی">🏠 شخصی</option>
+                        <option value="سلامتی">💪 سلامتی</option>
+                        <option value="یادگیری">📚 یادگیری</option>
+                    </select>
+                </div>
+                <div class="form-grp">
+                    <label class="form-lbl">تاریخ موعد</label>
+                    <input class="form-inp" id="mDue" type="date">
+                </div>
+                <div class="form-grp">
+                    <label class="form-lbl">اولویت</label>
+                    <div class="prio-row">
+                        <button class="prio-btn high" id="pH" onclick="setModalPrio('high')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"
+                                height="13">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            فوری
+                        </button>
+                        <button class="prio-btn medium sel" id="pM" onclick="setModalPrio('medium')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"
+                                height="13">
+                                <path
+                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            </svg>
+                            متوسط
+                        </button>
+                        <button class="prio-btn low" id="pL" onclick="setModalPrio('low')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"
+                                height="13">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="8 12 12 16 16 12" />
+                                <line x1="12" y1="8" x2="12" y2="16" />
+                            </svg>
+                            عادی
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-ftr">
+                <button class="btn-cancel" onclick="closeModal()">لغو</button>
+                <button class="btn-save" id="saveBtn" onclick="saveTask()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    ذخیره تسک
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-box" id="toastBox"></div>
+
+    <script>
+        // ─── STATE ───────────────────────────────────────────────
+        let tasks = JSON.parse(localStorage.getItem('tf-tasks') || '[]');
+        let habits = JSON.parse(localStorage.getItem('tf-habits') || 'null') || [
+            { id: 1, name: 'نوشیدن آب (۸ لیوان)', streak: 12, color: 'b', days: [1, 1, 1, 1, 1, 0, 1] },
+            { id: 2, name: 'ورزش ۳۰ دقیقه', streak: 7, color: 'g', days: [1, 1, 0, 1, 1, 1, 0] },
+            { id: 3, name: 'مطالعه ۲۰ دقیقه', streak: 20, color: 'p', days: [1, 1, 1, 1, 1, 1, 1] },
+            { id: 4, name: 'مدیتیشن صبحگاهی', streak: 5, color: 'o', days: [0, 1, 1, 0, 1, 1, 0] },
+        ];
+
+        const habitIcons = {
+            1: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+            2: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+            3: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+            4: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>`,
+        };
+
+        const habitColors = {
+            b: { bg: 'rgba(56,189,248,0.12)', color: 'var(--info)' },
+            g: { bg: 'var(--accent-dim)', color: 'var(--accent)' },
+            p: { bg: 'rgba(168,85,247,0.12)', color: 'var(--purple)' },
+            o: { bg: 'rgba(251,191,36,0.12)', color: 'var(--warning)' },
+        };
+
+        let selPriority = 'medium';
+        let selTag = 'شخصی';
+        let modalPrio = 'medium';
+        let currentView = 'today';
+        let sortOrder = 'default';
+        let secs = { habits: true, active: true, completed: true };
+        let weekOffset = 0; // weeks offset from current
+        let selectedDate = new Date().toISOString().split('T')[0];
+        let editingId = null;
+
+        const dayNames = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+
+        // ─── INIT ─────────────────────────────────────────────────
+        function init() {
+            if (!tasks.length) seedTasks();
+            setDate();
+            buildWeekStrip();
+            buildStreakDots();
+            renderAll();
+        }
+
+        function seedTasks() {
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+            tasks = [
+                { id: 1001, title: 'جلسه تیمی صبح', desc: 'بررسی پروژه Q3', tag: 'کار', priority: 'high', due: today, done: false, createdAt: Date.now() },
+                { id: 1002, title: 'پاسخ به ایمیل‌های مشتریان', desc: '', tag: 'کار', priority: 'medium', due: today, done: true, createdAt: Date.now() },
+                { id: 1003, title: 'خرید مواد غذایی هفتگی', desc: 'لیست خرید رو چک کن', tag: 'شخصی', priority: 'low', due: today, done: false, createdAt: Date.now() },
+                { id: 1004, title: 'بررسی گزارش مالی', desc: '', tag: 'کار', priority: 'high', due: today, done: false, createdAt: Date.now() },
+                { id: 1005, title: 'مرور فصل سوم کتاب', desc: 'Atomic Habits', tag: 'یادگیری', priority: 'medium', due: today, done: true, createdAt: Date.now() },
+                { id: 1006, title: 'پیاده‌روی ۳۰ دقیقه‌ای', desc: '', tag: 'سلامتی', priority: 'low', due: yesterday, done: true, createdAt: Date.now() },
+                { id: 1007, title: 'یادگیری CSS Grid', desc: 'دوره آنلاین', tag: 'یادگیری', priority: 'medium', due: tomorrow, done: false, createdAt: Date.now() },
+                { id: 1008, title: 'تماس با مشتری الف', desc: '', tag: 'کار', priority: 'high', due: yesterday, done: false, createdAt: Date.now() },
+            ];
+            saveTasks();
+        }
+
+        function setDate() {
+            const now = new Date();
+            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('pageSub').textContent = now.toLocaleDateString('fa-IR', opts);
+        }
+
+        function saveTasks() { localStorage.setItem('tf-tasks', JSON.stringify(tasks)); }
+        function saveHabits() { localStorage.setItem('tf-habits', JSON.stringify(habits)); }
+
+        // ─── WEEK STRIP ───────────────────────────────────────────
+        function buildWeekStrip() {
+            const strip = document.getElementById('weekStrip');
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            strip.innerHTML = '';
+            for (let i = -3; i <= 3; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i + weekOffset * 7);
+                const dateStr = d.toISOString().split('T')[0];
+                const isToday = dateStr === todayStr;
+                const isSelected = dateStr === selectedDate;
+                const hasTask = tasks.some(t => t.due === dateStr);
+                const div = document.createElement('div');
+                div.className = 'day-pill' + (isToday && !isSelected ? ' active' : '') + (isSelected ? ' selected-date' : '');
+                div.innerHTML = `<span class="day-name">${dayNames[d.getDay()]}</span><span class="day-num">${d.getDate()}</span><span class="day-dot${hasTask ? ' has-task' : ''}"></span>`;
+                div.onclick = () => selectDay(dateStr);
+                strip.appendChild(div);
+            }
+        }
+
+        function shiftWeek(dir) {
+            weekOffset += dir;
+            buildWeekStrip();
+        }
+
+        function selectDay(dateStr) {
+            selectedDate = dateStr;
+            const today = new Date().toISOString().split('T')[0];
+            if (dateStr === today) {
+                setView('today', null, 'today');
+            } else {
+                currentView = 'date';
+                const d = new Date(dateStr);
+                document.getElementById('pageTitle').textContent = d.toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' });
+                renderTasks();
+            }
+            buildWeekStrip();
+        }
+
+        // ─── STREAK DOTS ─────────────────────────────────────────
+        function buildStreakDots() {
+            const c = document.getElementById('streakDots');
+            c.innerHTML = '';
+            for (let i = 0; i < 7; i++) {
+                const d = document.createElement('div');
+                d.className = 'sdot ' + (i < 4 ? 'done' : i === 4 ? 'today' : '');
+                c.appendChild(d);
+            }
+        }
+
+        // ─── HABITS ──────────────────────────────────────────────
+        function renderHabits() {
+            const list = document.getElementById('habits-list');
+            if (!secs.habits) { list.innerHTML = ''; return; }
+            list.innerHTML = habits.map(h => {
+                const col = habitColors[h.color] || habitColors.b;
+                return `
+    <div class="habit-item">
+      <div class="habit-ico" style="background:${col.bg};color:${col.color}">${habitIcons[h.id] || habitIcons[1]}</div>
+      <div class="habit-info">
+        <div class="habit-name">${h.name}</div>
+        <div class="habit-streak">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          ${h.streak} روز متوالی
+        </div>
+      </div>
+      <div class="habit-days">
+        ${h.days.map((done, i) => `<div class="hday${done ? ' done' : ''}" onclick="toggleHabitDay(${h.id},${i})">${dayNames[i]}</div>`).join('')}
+      </div>
+    </div>`;
+            }).join('');
+        }
+
+        function toggleHabitDay(id, idx) {
+            const h = habits.find(x => x.id === id);
+            if (!h) return;
+            h.days[idx] = h.days[idx] ? 0 : 1;
+            h.streak = h.days.filter(Boolean).length;
+            saveHabits();
+            renderHabits();
+            toast(h.days[idx] ? 'عادت انجام شد!' : 'لغو شد', h.days[idx] ? 'check' : 'x');
+        }
+
+        // ─── TASKS ────────────────────────────────────────────────
+        function getVisible() {
+            let list = [...tasks];
+            if (currentView === 'today') {
+                const today = new Date().toISOString().split('T')[0];
+                list = list.filter(t => t.due === today);
+            } else if (currentView === 'date') {
+                list = list.filter(t => t.due === selectedDate);
+            } else if (currentView === 'done') {
+                list = list.filter(t => t.done);
+            } else if (currentView.startsWith('tag-')) {
+                const tag = currentView.slice(4);
+                list = list.filter(t => t.tag === tag);
+            }
+            return list;
+        }
+
+        function renderTasks() {
+            const visible = getVisible();
+            const active = visible.filter(t => !t.done);
+            const completed = visible.filter(t => t.done);
+            const today = new Date().toISOString().split('T')[0];
+
+            document.getElementById('activeCount').textContent = active.length;
+            document.getElementById('completedCount').textContent = completed.length;
+            document.getElementById('statTotal').textContent = visible.length;
+            document.getElementById('statPending').textContent = active.length;
+            document.getElementById('statDone').textContent = completed.length;
+            document.getElementById('statProg').style.width = visible.length ? (completed.length / visible.length * 100) + '%' : '0%';
+
+            const todayDone = tasks.filter(t => t.done && t.due === today).length;
+            document.getElementById('topBadgeVal').textContent = todayDone;
+            document.getElementById('todayBadge').textContent = tasks.filter(t => !t.done && t.due === today).length;
+            document.getElementById('allBadge').textContent = tasks.length;
+
+            const renderList = (items, id) => {
+                const el = document.getElementById(id);
+                const key = id === 'active-list' ? 'active' : 'completed';
+                if (!secs[key]) { el.innerHTML = ''; return; }
+                if (!items.length) {
+                    el.innerHTML = `<div class="empty"><div class="empty-ico"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><p>${key === 'active' ? 'همه کارها انجام شده! 🎉' : 'هنوز کاری تکمیل نشده'}</p></div>`;
+                    return;
+                }
+                el.innerHTML = items.map(t => taskHTML(t)).join('');
+            };
+
+            renderList(active, 'active-list');
+            renderList(completed, 'completed-list');
+        }
+
+        const tagCls = { کار: 'tb', شخصی: 'tp', سلامتی: 'tg', یادگیری: 'to' };
+        const tagIcon = {
+            کار: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+            شخصی: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`,
+            سلامتی: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+            یادگیری: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+        };
+
+        function taskHTML(t) {
+            const today = new Date().toISOString().split('T')[0];
+            const isOv = t.due && t.due < today && !t.done;
+            const pc = t.priority === 'high' ? 'ph' : t.priority === 'medium' ? 'pm' : 'pl';
+            const dueStr = t.due ? `<span class="t-due${isOv ? ' ov' : ''}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    ${fmtDate(t.due)}${isOv ? ' (تأخیر)' : ''}
+  </span>` : '';
+            return `
+  <div class="task-item ${t.done ? 'done' : ''} ${pc}" id="ti-${t.id}">
+    <div class="t-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t.id})">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="t-body">
+      <div class="t-title">${t.title}</div>
+      ${t.desc ? `<div class="t-desc">${t.desc}</div>` : ''}
+      <div class="t-meta">
+        <span class="tag ${tagCls[t.tag] || 'tb'}">${tagIcon[t.tag] || ''}${t.tag}</span>
+        ${dueStr}
+      </div>
+    </div>
+    <div class="t-actions">
+      <button class="t-act-btn" onclick="editTask(${t.id})" title="ویرایش">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="t-act-btn del" onclick="deleteTask(${t.id})" title="حذف">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>
+  </div>`;
+        }
+
+        function fmtDate(ds) {
+            return new Date(ds).toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' });
+        }
+
+        function toggleTask(id) {
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+            t.done = !t.done;
+            saveTasks();
+            renderTasks();
+            buildWeekStrip();
+            if (t.done) {
+                toast('تسک تکمیل شد! +10 امتیاز', 'check');
+                const pts = document.getElementById('ptsVal');
+                pts.textContent = parseInt(pts.textContent) + 10;
+            } else {
+                toast('تسک بازگشت به حالت قبل', 'info');
+            }
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(x => x.id !== id);
+            saveTasks();
+            renderTasks();
+            buildWeekStrip();
+            toast('تسک حذف شد', 'trash');
+        }
+
+        function editTask(id) {
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+            editingId = id;
+            document.getElementById('mTitle').value = t.title;
+            document.getElementById('mDesc').value = t.desc;
+            document.getElementById('mTag').value = t.tag;
+            document.getElementById('mDue').value = t.due;
+            document.getElementById('modalTitleLabel').textContent = 'ویرایش تسک';
+            modalPrio = t.priority;
+            updatePrioUI();
+            openModal();
+        }
+
+        function sortTasks() {
+            const orders = ['default', 'priority', 'date', 'name'];
+            const idx = orders.indexOf(sortOrder);
+            sortOrder = orders[(idx + 1) % orders.length];
+            if (sortOrder === 'priority') {
+                const p = { high: 0, medium: 1, low: 2 };
+                tasks.sort((a, b) => p[a.priority] - p[b.priority]);
+            } else if (sortOrder === 'date') {
+                tasks.sort((a, b) => (a.due || '') < (b.due || '') ? -1 : 1);
+            } else if (sortOrder === 'name') {
+                tasks.sort((a, b) => a.title.localeCompare(b.title));
+            }
+            saveTasks();
+            renderTasks();
+            const labels = { default: 'پیش‌فرض', priority: 'اولویت', date: 'تاریخ', name: 'نام' };
+            toast('مرتب‌سازی: ' + labels[sortOrder], 'sort');
+        }
+
+        // ─── SECTIONS ─────────────────────────────────────────────
+        function toggleSection(name) {
+            secs[name] = !secs[name];
+            const chev = document.getElementById('chev-' + name);
+            if (chev) chev.classList.toggle('collapsed', !secs[name]);
+            if (name === 'habits') renderHabits();
+            else renderTasks();
+        }
+
+        // ─── VIEW ─────────────────────────────────────────────────
+        function setView(view, navEl, bnavId) {
+            currentView = view;
+            if (view === 'today') {
+                selectedDate = new Date().toISOString().split('T')[0];
+                weekOffset = 0;
+                buildWeekStrip();
+            }
+            const titles = { today: 'امروز', all: 'همه تسک‌ها', habits: 'عادت‌ها', done: 'انجام‌شده' };
+            document.getElementById('pageTitle').textContent = titles[view] || view;
+            document.getElementById('habitsSection').style.display = view === 'habits' ? '' : '';
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.bnav-item').forEach(el => el.classList.remove('active'));
+            if (navEl) navEl.classList.add('active');
+            const nid = document.getElementById('nav-' + view);
+            if (nid) nid.classList.add('active');
+            if (bnavId) {
+                const bid = document.getElementById('bnav-' + bnavId);
+                if (bid) bid.classList.add('active');
+            }
+            renderTasks();
+        }
+
+        function filterByTag(tag) {
+            currentView = 'tag-' + tag;
+            document.getElementById('pageTitle').textContent = tag;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            renderTasks();
+        }
+
+        // ─── MODAL ────────────────────────────────────────────────
+        function openModal() {
+            document.getElementById('overlay').classList.add('open');
+            document.getElementById('mDue').value = selectedDate || new Date().toISOString().split('T')[0];
+            setTimeout(() => document.getElementById('mTitle').focus(), 300);
+        }
+        function closeModal() {
+            document.getElementById('overlay').classList.remove('open');
+            document.getElementById('mTitle').value = '';
+            document.getElementById('mDesc').value = '';
+            document.getElementById('mDue').value = '';
+            document.getElementById('modalTitleLabel').textContent = 'تسک جدید';
+            editingId = null;
+            modalPrio = 'medium';
+            updatePrioUI();
+        }
+        function overlayClick(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+
+        function setModalPrio(p) { modalPrio = p; updatePrioUI(); }
+        function updatePrioUI() {
+            ['high', 'medium', 'low'].forEach(p => {
+                const map = { high: 'pH', medium: 'pM', low: 'pL' };
+                document.getElementById(map[p]).classList.toggle('sel', p === modalPrio);
+            });
+        }
+
+        function saveTask() {
+            const title = document.getElementById('mTitle').value.trim();
+            if (!title) { toast('عنوان تسک را وارد کن', 'warn'); return; }
+            if (editingId) {
+                const t = tasks.find(x => x.id === editingId);
+                if (t) {
+                    t.title = title;
+                    t.desc = document.getElementById('mDesc').value.trim();
+                    t.tag = document.getElementById('mTag').value;
+                    t.due = document.getElementById('mDue').value;
+                    t.priority = modalPrio;
+                    saveTasks();
+                    renderTasks();
+                    buildWeekStrip();
+                    closeModal();
+                    toast('تسک ویرایش شد', 'edit');
+                    return;
+                }
+            }
+            tasks.push({
+                id: Date.now(),
+                title,
+                desc: document.getElementById('mDesc').value.trim(),
+                tag: document.getElementById('mTag').value,
+                due: document.getElementById('mDue').value,
+                priority: modalPrio,
+                done: false,
+                createdAt: Date.now()
+            });
+            saveTasks();
+            renderTasks();
+            buildWeekStrip();
+            closeModal();
+            toast('تسک اضافه شد!', 'check');
+        }
+
+        // ─── QUICK ADD ────────────────────────────────────────────
+        function quickAdd(e) { if (e.key === 'Enter') quickAddBtn(); }
+        function quickAddBtn() {
+            const inp = document.getElementById('quickInput');
+            const title = inp.value.trim();
+            if (!title) return;
+            tasks.push({
+                id: Date.now(), title, desc: '',
+                tag: selTag, priority: selPriority,
+                due: selectedDate || new Date().toISOString().split('T')[0],
+                done: false, createdAt: Date.now()
+            });
+            inp.value = '';
+            saveTasks(); renderTasks(); buildWeekStrip();
+            toast('تسک اضافه شد!', 'check');
+        }
+
+        function selectPriority(p) {
+            selPriority = p;
+            ['chipHigh', 'chipMed', 'chipLow'].forEach((id, i) => {
+                document.getElementById(id).classList.toggle('sel', ['high', 'medium', 'low'][i] === p);
+            });
+        }
+
+        function selectTagChip(t) {
+            selTag = t;
+        }
+
+        // ─── SEARCH ───────────────────────────────────────────────
+        let searchOpen = false;
+        function toggleSearch() {
+            searchOpen = !searchOpen;
+            const bar = document.getElementById('searchBar');
+            bar.classList.toggle('visible', searchOpen);
+            if (searchOpen) { setTimeout(() => document.getElementById('searchInput').focus(), 300); }
+            else { document.getElementById('searchInput').value = ''; renderTasks(); }
+        }
+        function closeSearch() { searchOpen = false; document.getElementById('searchBar').classList.remove('visible'); document.getElementById('searchInput').value = ''; renderTasks(); }
+        function doSearch(q) {
+            if (!q) { renderTasks(); return; }
+            const r = tasks.filter(t => t.title.includes(q) || t.tag.includes(q) || (t.desc && t.desc.includes(q)));
+            document.getElementById('active-list').innerHTML = r.filter(t => !t.done).map(taskHTML).join('') || '<div class="empty"><div class="empty-ico"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>نتیجه‌ای یافت نشد</p></div>';
+            document.getElementById('completed-list').innerHTML = r.filter(t => t.done).map(taskHTML).join('');
+        }
+
+        // ─── TOAST ────────────────────────────────────────────────
+        const toastIconMap = {
+            check: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
+            trash: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>`,
+            edit: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg>`,
+            warn: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+            info: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+            sort: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/></svg>`,
+            x: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        };
+
+        function toast(msg, type = 'info') {
+            const box = document.getElementById('toastBox');
+            const el = document.createElement('div');
+            el.className = 'toast';
+            el.innerHTML = (toastIconMap[type] || '') + msg;
+            box.appendChild(el);
+            setTimeout(() => el.remove(), 2700);
+        }
+
+        // ─── RENDER ALL ───────────────────────────────────────────
+        function renderAll() { renderHabits(); renderTasks(); }
+
+        init();
+    </script>
+</body>
+
+</html>
