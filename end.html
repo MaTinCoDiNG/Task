@@ -210,17 +210,15 @@
         </div>
 
         <div class="warning">
-            ✅ <strong>تنظیمات نهایی:</strong>
+            ✅ <strong>روش جدید - بدون API Key برای خواندن!</strong>
             <br><br>
             📦 <strong>Bin ID:</strong> <code style="background:#333;color:#fff;padding:2px 8px;border-radius:4px;">6a4bf9a4f5f4af5e2968797c</code>
             <br>
-            🔑 <strong>Access Key ID:</strong> <code style="background:#333;color:#fff;padding:2px 8px;border-radius:4px;">6a4bfb78da38895dfe36f3e6</code>
-            <br>
             🌐 <strong>Visibility:</strong> Public ✅
-            <br>
-            🔑 <strong>Permissions:</strong> Read, Update, Delete, Create ✅
             <br><br>
-            <span style="color:green;">✅ همه چیز آماده تست XSS است!</span>
+            <span style="color:green;">✅ برای خواندن داده‌ها نیازی به API Key نیست!</span>
+            <br>
+            <span style="color:#ff8800;">⚠️ برای ذخیره داده‌ها به API Key نیاز است.</span>
         </div>
     </div>
 
@@ -229,6 +227,8 @@
         // 🔑 اطلاعات JSONBin.io شما
         // ============================================================
         const BIN_ID = '6a4bf9a4f5f4af5e2968797c';
+        // برای خواندن نیازی به API Key نیست (Bin Public است)
+        // برای نوشتن از کلید زیر استفاده می‌شود
         const API_KEY = '$2a$10$CtlS6BQ4U6Dkm0iiVdls7.FahOC.1TieUJSJ8ET3mPZYhB4mT6Qf.';
 
         // ============================================================
@@ -243,39 +243,33 @@
         }
 
         // ============================================================
-        // تست اتصال
+        // تست اتصال (بدون API Key برای خواندن)
         // ============================================================
         async function testConnection() {
             const statusText = document.getElementById('statusText');
-            debugLog('🔄 تست اتصال به JSONBin.io...');
+            debugLog('🔄 تست اتصال به JSONBin.io (بدون API Key)...');
             debugLog(`📦 Bin ID: ${BIN_ID}`);
-            debugLog(`🔑 Access Key ID: 6a4bfb78da38895dfe36f3e6`);
             
             try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
+                // ✅ بدون API Key برای خواندن (چون Bin Public است)
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);
                 
                 debugLog(`📡 پاسخ سرور: ${response.status} ${response.statusText}`);
                 
                 if (response.ok) {
                     statusText.className = 'status-online';
                     statusText.textContent = '✅ متصل به JSONBin.io';
-                    debugLog('✅ اتصال برقرار شد!');
+                    debugLog('✅ اتصال برقرار شد! (بدون API Key)');
                     return true;
                 } else {
                     statusText.className = 'status-offline';
                     statusText.textContent = `❌ خطا: ${response.status}`;
                     
-                    if (response.status === 401) {
-                        debugLog('❌ خطای 401: API Key نامعتبر است!');
-                        debugLog('💡 راه حل: یک API Key جدید بسازید.');
-                    } else if (response.status === 404) {
+                    if (response.status === 404) {
                         debugLog('❌ خطای 404: Bin ID پیدا نشد!');
-                        debugLog('💡 راه حل: Bin ID را از آدرس URL کپی کنید.');
                     } else if (response.status === 403) {
-                        debugLog('❌ خطای 403: دسترسی غیرمجاز!');
-                        debugLog('💡 راه حل: Bin را Public کنید.');
+                        debugLog('❌ خطای 403: Bin Public نیست!');
+                        debugLog('💡 راه حل: Bin را در JSONBin.io Public کنید.');
                     }
                     return false;
                 }
@@ -292,11 +286,10 @@
         // ============================================================
 
         async function loadUsers() {
-            debugLog('🔄 بارگذاری کاربران...');
+            debugLog('🔄 بارگذاری کاربران (بدون API Key)...');
             try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
+                // ✅ بدون API Key برای خواندن
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
@@ -312,8 +305,9 @@
         }
 
         async function saveUsers(users) {
-            debugLog(`🔄 ذخیره ${users.length} کاربر...`);
+            debugLog(`🔄 ذخیره ${users.length} کاربر (با API Key)...`);
             try {
+                // ⚠️ برای نوشتن به API Key نیاز است
                 const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                     method: 'PUT',
                     headers: {
@@ -329,7 +323,12 @@
                 return true;
             } catch (error) {
                 debugLog(`❌ خطا در ذخیره: ${error.message}`);
-                showMessage('❌ خطا در ذخیره داده‌ها: ' + error.message, 'error');
+                if (error.message.includes('401')) {
+                    debugLog('💡 راه حل: API Key را در JSONBin.io بررسی کنید.');
+                    showMessage('❌ خطای 401: API Key نامعتبر است! یک کلید جدید بسازید.', 'error');
+                } else {
+                    showMessage('❌ خطا در ذخیره داده‌ها: ' + error.message, 'error');
+                }
                 return false;
             }
         }
@@ -478,8 +477,9 @@
         (async function init() {
             debugLog('🚀 راه‌اندازی برنامه...');
             debugLog(`📦 Bin ID: ${BIN_ID}`);
-            debugLog(`🔑 Access Key ID: 6a4bfb78da38895dfe36f3e6`);
-            debugLog(`🔑 Permissions: Read, Update, Delete, Create ✅`);
+            debugLog(`🌐 Visibility: Public ✅`);
+            debugLog(`📖 خواندن: بدون API Key`);
+            debugLog(`✏️ نوشتن: با API Key`);
             
             const connected = await testConnection();
             if (connected) {
@@ -500,8 +500,8 @@
 
         console.log('%c🔒 محیط تست XSS', 'font-size:20px; font-weight:bold; color:#ff4444;');
         console.log('%c📦 Bin ID: ' + BIN_ID, 'font-size:14px; color:#4CAF50;');
-        console.log('%c🔑 Access Key ID: 6a4bfb78da38895dfe36f3e6', 'font-size:14px; color:#2196F3;');
-        console.log('%c✅ Permissions: Read, Update, Delete, Create', 'font-size:14px; color:#28a745;');
+        console.log('%c📖 خواندن: بدون API Key ✅', 'font-size:14px; color:#28a745;');
+        console.log('%c✏️ نوشتن: با API Key', 'font-size:14px; color:#ff8800;');
         console.log('%c⚠️ جعبه دیباگ را برای عیب‌یابی بررسی کنید.', 'font-size:14px; color:#ff8800;');
     </script>
 </body>
