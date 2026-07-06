@@ -1,1 +1,501 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔓 پنل ورود ابری - تست XSS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Tahoma', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            direction: rtl;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 550px;
+        }
+        h1 { text-align: center; color: #1a1a2e; margin-bottom: 10px; font-size: 28px; }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #ff4444;
+            padding-bottom: 10px;
+        }
+        .subtitle span { color: #ff4444; font-weight: bold; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Tahoma', Arial, sans-serif;
+        }
+        input:focus, textarea:focus { border-color: #4CAF50; outline: none; }
+        textarea { resize: vertical; min-height: 80px; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: opacity 0.3s;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            min-height: 100px;
+        }
+        .output h3 { color: #888; margin-bottom: 10px; font-size: 14px; }
+        .output-content { padding: 10px; background: white; border-radius: 5px; min-height: 50px; }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-top: 15px;
+            border: 1px solid #ffc107;
+        }
+        .warning strong { color: #dc3545; }
+        .payload-examples {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            border: 1px solid #4CAF50;
+        }
+        .payload-examples h4 { color: #2e7d32; margin-bottom: 10px; }
+        .payload-examples code {
+            display: block;
+            background: #1a1a2e;
+            color: #00ff00;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-size: 13px;
+            direction: ltr;
+            text-align: left;
+            overflow-x: auto;
+            word-break: break-all;
+        }
+        .clear-btn { background: #dc3545; margin-top: 10px; font-size: 14px; }
+        .clear-btn:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .user-card {
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .user-card .date { color: #999; font-size: 12px; margin-top: 5px; }
+        .user-card .bio-content {
+            margin-top: 5px;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            min-height: 30px;
+        }
+        .loading { text-align: center; color: #666; padding: 20px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-group button { flex: 1; padding: 10px; font-size: 14px; }
+        .status-online { color: #28a745; font-weight: bold; }
+        .status-offline { color: #dc3545; font-weight: bold; }
+        .debug-box {
+            margin-top: 15px;
+            padding: 10px;
+            background: #1a1a2e;
+            color: #00ff00;
+            border-radius: 8px;
+            font-size: 12px;
+            direction: ltr;
+            text-align: left;
+            font-family: monospace;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .stats { display: flex; justify-content: space-between; font-size: 13px; color: #888; margin: 10px 0; }
+        .badge {
+            display: inline-block;
+            background: #ff4444;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔓 پنل ورود ابری</h1>
+        <div class="subtitle">
+            ⚠️ محیط <span>تست XSS ذخیره‌ای</span> - داده‌ها در ابر ذخیره می‌شوند
+        </div>
 
+        <div style="text-align:center;margin-bottom:15px;font-size:14px;">
+            <span id="statusText" class="status-offline">🔄 در حال اتصال...</span>
+            <span style="color:#999;font-size:12px;"> | بین همه دستگاه‌ها</span>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>👤 نام کاربری</label>
+                <input type="text" id="username" placeholder="نام کاربری خود را وارد کنید...">
+            </div>
+            <div class="form-group">
+                <label>📝 بیوگرافی (اینجا کد XSS را تست کنید)</label>
+                <textarea id="bio" placeholder="کد XSS خود را اینجا وارد کنید..."></textarea>
+            </div>
+            <button type="submit">🚪 ثبت و ورود</button>
+        </form>
+
+        <div class="output">
+            <h3>📋 پیام سیستم:</h3>
+            <div id="outputContent" class="output-content">
+                <span style="color: #999;">منتظر ورود شما هستیم...</span>
+            </div>
+        </div>
+
+        <div class="output" style="margin-top:15px;">
+            <h3>👥 کاربران ثبت‌شده (همه دستگاه‌ها)</h3>
+            <div id="usersList">
+                <div class="loading">🔄 در حال بارگذاری...</div>
+            </div>
+        </div>
+
+        <div class="debug-box" id="debugBox">
+📋 لاگ سیستم:
+در حال آماده‌سازی...
+        </div>
+
+        <div class="payload-examples">
+            <h4>🧪 کدهای آزمایشی برای XSS:</h4>
+            <code>&lt;img src="x" onerror="alert('XSS!')"&gt;</code>
+            <code>&lt;div style="background:red;color:white;padding:20px;"&gt;هک شدید!&lt;/div&gt;</code>
+            <code>&lt;script&gt;alert('تزریق شد!')&lt;/script&gt;</code>
+            <code>&lt;h2 onclick="alert('کلیک!')"&gt;روی من کلیک کن&lt;/h2&gt;</code>
+
+            <div class="btn-group">
+                <button class="clear-btn" onclick="clearOutput()">🗑️ پاک کردن خروجی</button>
+                <button class="clear-btn btn-secondary" onclick="clearAllUsers()">🗑️ حذف همه کاربران</button>
+            </div>
+        </div>
+
+        <div class="warning">
+            ✅ <strong>تنظیمات نهایی:</strong>
+            <br><br>
+            📦 <strong>Bin ID:</strong> <code style="background:#333;color:#fff;padding:2px 8px;border-radius:4px;">6a4bf9a4f5f4af5e2968797c</code>
+            <br>
+            🌐 <strong>Visibility:</strong> Public ✅
+            <br>
+            🔑 <strong>API Key:</strong> تنظیم شده ✅
+            <br><br>
+            <span style="color:green;">✅ همه چیز آماده تست XSS است!</span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 🔑 اطلاعات JSONBin.io شما
+        // ============================================================
+        const BIN_ID = '6a4bf9a4f5f4af5e2968797c';
+        const API_KEY = '$2a$10$YDxcfqlnI8BlfzKZ2D1DfewWlwos0Fb6o9w8Xd7D6HUL1FY0Nal92';
+
+        // ============================================================
+        // دیباگ کردن
+        // ============================================================
+        function debugLog(message) {
+            const box = document.getElementById('debugBox');
+            const time = new Date().toLocaleTimeString('fa-IR');
+            box.textContent += `\n[${time}] ${message}`;
+            box.scrollTop = box.scrollHeight;
+            console.log(`[${time}] ${message}`);
+        }
+
+        // ============================================================
+        // تست اتصال
+        // ============================================================
+        async function testConnection() {
+            const statusText = document.getElementById('statusText');
+            debugLog('🔄 تست اتصال به JSONBin.io...');
+            debugLog(`📦 Bin ID: ${BIN_ID}`);
+            
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                
+                debugLog(`📡 پاسخ سرور: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    statusText.className = 'status-online';
+                    statusText.textContent = '✅ متصل به JSONBin.io';
+                    debugLog('✅ اتصال برقرار شد!');
+                    return true;
+                } else {
+                    statusText.className = 'status-offline';
+                    statusText.textContent = `❌ خطا: ${response.status}`;
+                    
+                    if (response.status === 401) {
+                        debugLog('❌ خطای 401: API Key نامعتبر است!');
+                    } else if (response.status === 404) {
+                        debugLog('❌ خطای 404: Bin ID پیدا نشد!');
+                    } else if (response.status === 403) {
+                        debugLog('❌ خطای 403: دسترسی غیرمجاز!');
+                    }
+                    return false;
+                }
+            } catch (error) {
+                statusText.className = 'status-offline';
+                statusText.textContent = '❌ بدون اتصال';
+                debugLog(`❌ خطای شبکه: ${error.message}`);
+                return false;
+            }
+        }
+
+        // ============================================================
+        // توابع اصلی
+        // ============================================================
+
+        async function loadUsers() {
+            debugLog('🔄 بارگذاری کاربران...');
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                const users = data.record.users || [];
+                debugLog(`✅ ${users.length} کاربر بارگذاری شد.`);
+                return users;
+            } catch (error) {
+                debugLog(`❌ خطا در بارگذاری: ${error.message}`);
+                showMessage('❌ خطا در بارگذاری داده‌ها: ' + error.message, 'error');
+                return [];
+            }
+        }
+
+        async function saveUsers(users) {
+            debugLog(`🔄 ذخیره ${users.length} کاربر...`);
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify({ users })
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                debugLog('✅ ذخیره با موفقیت انجام شد.');
+                return true;
+            } catch (error) {
+                debugLog(`❌ خطا در ذخیره: ${error.message}`);
+                showMessage('❌ خطا در ذخیره داده‌ها: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        function showMessage(text, type = 'success') {
+            const output = document.getElementById('outputContent');
+            const colors = {
+                success: '#d4edda',
+                error: '#f8d7da',
+                warning: '#fff3cd',
+                info: '#d1ecf1'
+            };
+            const borderColors = {
+                success: '#28a745',
+                error: '#dc3545',
+                warning: '#ffc107',
+                info: '#17a2b8'
+            };
+            output.innerHTML = `
+                <div style="padding:12px; background:${colors[type] || colors.info}; 
+                            border-radius:8px; border-right: 4px solid ${borderColors[type] || borderColors.info};">
+                    ${text}
+                </div>
+            `;
+        }
+
+        function clearOutput() {
+            document.getElementById('outputContent').innerHTML = '<span style="color: #999;">خروجی پاک شد</span>';
+        }
+
+        async function displayUsers() {
+            const output = document.getElementById('usersList');
+            output.innerHTML = '<div class="loading">🔄 در حال بارگذاری...</div>';
+
+            const users = await loadUsers();
+
+            if (users.length === 0) {
+                output.innerHTML = `
+                    <div style="text-align:center; color:#999; padding:20px;">
+                        📭 هنوز کاربری ثبت نشده است.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<div class="stats">
+                <span>👥 ${users.length} کاربر ثبت شده</span>
+                <span>🔄 ${new Date().toLocaleString('fa-IR')}</span>
+            </div>`;
+
+            users.forEach((user, index) => {
+                // ❌ آسیب‌پذیری XSS
+                html += `
+                    <div class="user-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <strong>${user.username}</strong>
+                            <span class="badge">#${index + 1}</span>
+                        </div>
+                        <div class="bio-content">
+                            ${user.bio || '(بیوگرافی خالی)'}
+                        </div>
+                        <div class="date">📅 ${user.date || 'تاریخ نامشخص'}</div>
+                    </div>
+                `;
+            });
+
+            output.innerHTML = html;
+
+            const hasXss = users.some(u => {
+                const text = (u.username || '') + (u.bio || '');
+                return text.includes('<') || text.includes('>');
+            });
+            if (hasXss) {
+                debugLog('🚨 کد XSS در داده‌های ذخیره‌شده شناسایی شد!');
+                showMessage('⚠️ کد XSS در داده‌های ذخیره‌شده شناسایی شد!', 'warning');
+            }
+        }
+
+        async function clearAllUsers() {
+            if (confirm('⚠️ آیا مطمئن هستید که می‌خواهید همه کاربران را حذف کنید？')) {
+                const saved = await saveUsers([]);
+                if (saved) {
+                    await displayUsers();
+                    showMessage('✅ همه کاربران با موفقیت حذف شدند.', 'success');
+                    debugLog('🗑️ همه کاربران حذف شدند.');
+                }
+            }
+        }
+
+        // ============================================================
+        // مدیریت فرم
+        // ============================================================
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const bio = document.getElementById('bio').value.trim();
+
+            if (!username) {
+                showMessage('❌ لطفاً نام کاربری را وارد کنید!', 'error');
+                return;
+            }
+
+            const submitBtn = this.querySelector('button');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ در حال ثبت...';
+            debugLog(`📝 ثبت کاربر: ${username}`);
+
+            try {
+                const users = await loadUsers();
+                users.push({
+                    username: username,
+                    bio: bio || '(بیوگرافی خالی)',
+                    date: new Date().toLocaleString('fa-IR')
+                });
+
+                const saved = await saveUsers(users);
+
+                if (saved) {
+                    showMessage(`
+                        ✅ کاربر <strong>${username}</strong> با موفقیت ثبت شد!
+                        <br>
+                        <span style="font-size:13px; color:#666;">📝 بیوگرافی: ${bio || '(خالی)'}</span>
+                    `, 'success');
+
+                    await displayUsers();
+
+                    document.getElementById('username').value = '';
+                    document.getElementById('bio').value = '';
+                    debugLog(`✅ کاربر ${username} با موفقیت ثبت شد.`);
+                }
+            } catch (error) {
+                showMessage('❌ خطا: ' + error.message, 'error');
+                debugLog(`❌ خطا: ${error.message}`);
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🚪 ثبت و ورود';
+        });
+
+        // ============================================================
+        // راه‌اندازی اولیه
+        // ============================================================
+
+        (async function init() {
+            debugLog('🚀 راه‌اندازی برنامه...');
+            debugLog(`📦 Bin ID: ${BIN_ID}`);
+            debugLog(`🔑 API Key: ${API_KEY.substring(0, 20)}...`);
+            debugLog(`🌐 Visibility: Public ✅`);
+            
+            const connected = await testConnection();
+            if (connected) {
+                await displayUsers();
+                debugLog('✅ برنامه با موفقیت راه‌اندازی شد.');
+            } else {
+                document.getElementById('usersList').innerHTML = `
+                    <div style="text-align:center; color:#dc3545; padding:20px; border:1px solid #dc3545; border-radius:8px;">
+                        ❌ اتصال به سرور برقرار نشد!<br>
+                        <span style="font-size:13px; color:#666;">
+                            لطفاً <strong>جعبه دیباگ</strong> را بررسی کنید.
+                        </span>
+                    </div>
+                `;
+                debugLog('❌ راه‌اندازی با خطا مواجه شد.');
+            }
+        })();
+
+        console.log('%c🔒 محیط تست XSS', 'font-size:20px; font-weight:bold; color:#ff4444;');
+        console.log('%c📦 Bin ID: ' + BIN_ID, 'font-size:14px; color:#4CAF50;');
+        console.log('%c🔑 API Key: تنظیم شده ✅', 'font-size:14px; color:#28a745;');
+        console.log('%c⚠️ جعبه دیباگ را برای عیب‌یابی بررسی کنید.', 'font-size:14px; color:#ff8800;');
+    </script>
+</body>
+</html>
